@@ -1,0 +1,124 @@
+Essential Maven Commands (Developer Cheat Sheet)
+✅ 1. Clean Project
+mvn clean
+
+✔ Deletes target/ folder
+✔ Removes old compiled files
+
+👉 Always run when facing build issues.
+
+✅ 2. Compile Project
+mvn compile
+
+✔ Compiles source code
+✔ Checks syntax errors
+
+✅ 3. Run Tests
+mvn test
+
+✔ Executes unit tests
+✔ Does NOT create JAR
+
+✅ 4. Package Application ⭐ (VERY IMPORTANT)
+mvn package
+
+✔ Compiles
+✔ Runs tests
+✔ Creates .jar / .war
+
+Output:
+
+target/user-service.jar
+✅ 5. Install to Local Repository
+mvn install
+
+✔ Builds project
+✔ Stores artifact in local Maven repo
+
+Location:
+
+~/.m2/repository
+
+👉 Needed for multi-module microservices.
+
+✅ 6. Run Spring Boot Application
+mvn spring-boot:run
+
+✔ Runs app without building jar
+
+Used daily during development.
+
+✅ 7. Skip Tests (Fast Build)
+mvn clean install -DskipTests
+
+🔥 Most used command in industry.
+
+✅ 8. Download Dependencies Only
+mvn dependency:resolve
+
+✔ Downloads all dependencies
+
+Useful for first project setup.
+
+✅ 9. Show Dependency Tree ⭐
+mvn dependency:tree
+
+✔ Debug dependency conflicts
+✔ Very important in microservices
+
+✅ 10. Check Project Information
+mvn help:effective-pom
+
+Shows final merged POM after inheritance.
+
+Senior engineers use this a lot.
+
+✅ 11. Update Dependencies
+mvn clean install -U
+
+✔ Forces dependency update
+
+✅ 12. Build Specific Module (Microservices)
+mvn clean install -pl user-service
+
+✔ Builds only one service
+
+✅ 13. Build With Parallel Threads 🚀
+mvn clean install -T 1C
+
+✔ Faster builds on multi-core CPU.
+
+⭐ Daily Developer Commands (Must Memorize)
+mvn clean install
+mvn spring-boot:run
+mvn clean install -DskipTests
+mvn dependency:tree
+🧠 Maven Build Lifecycle (VERY IMPORTANT)
+validate
+compile
+test
+package
+verify
+install
+deploy
+
+👉 Each phase includes previous phases automatically.
+
+Example:
+
+install → package → test → compile
+🔥 Senior Java Developer Tip
+
+In real microservices projects you will combine Maven with:
+
+Spring Boot
+
+Docker
+
+Jenkins
+
+Kubernetes
+
+Maven becomes your CI/CD backbone.
+
+If you want, I can also give you the 🔥 Top 20 Maven interview questions asked in companies like Microsoft, IBM, and Nvidia. Just say “Maven interview”.
