@@ -1,0 +1,107 @@
+# =====================================================
+# APPLICATION CONFIGURATION
+# =====================================================
+spring:
+  application:
+    # Name used while registering with Eureka
+    name: USER-SERVICE
+
+  # =====================================================
+  # DATABASE CONFIGURATION (PostgreSQL)
+  # =====================================================
+  datasource:
+    url: jdbc:postgresql://localhost:5432/user-service
+    username: postgres
+    password: admin
+    driver-class-name: org.postgresql.Driver
+
+  # =====================================================
+  # JPA / HIBERNATE CONFIGURATION
+  # =====================================================
+  jpa:
+    # Hibernate dialect for PostgreSQL
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+    hibernate:
+      # update → auto create/update tables
+      # create → recreate every startup
+      # validate → only validate schema
+      ddl-auto: update
+
+    # Show SQL queries in console
+    show-sql: true
+
+    properties:
+      hibernate:
+        # Pretty format SQL logs
+        format_sql: true
+
+
+# =====================================================
+# SERVER CONFIGURATION
+# =====================================================
+server:
+  # Port where User Service runs
+  port: 8081
+
+
+# =====================================================
+# ACTUATOR (Monitoring & Health Checks)
+# =====================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        # Expose all actuator endpoints
+        include: "*"
+
+  endpoint:
+    health:
+      # Show detailed health information
+      show-details: always
+
+
+# =====================================================
+# LOGGING CONFIGURATION
+# =====================================================
+logging:
+  level:
+    # Spring framework logs
+    org.springframework: INFO
+
+    # Show executed SQL queries
+    org.hibernate.SQL: DEBUG
+
+
+# =====================================================
+# SECURITY / JWT CONFIGURATION
+# =====================================================
+jwt:
+  # Secret key (can be overridden using environment variable JWT_SECRET)
+  secret: ${JWT_SECRET:L8KwmXTT/ByT7e9ZiO0s5cGedE7cSfS5YKpC0Qn/qO8=}
+
+  # Access token expiration (seconds)
+  expiration: 86400
+
+  # Refresh token expiration (seconds)
+  refreshExpiration: 172800
+
+
+# =====================================================
+# EUREKA CLIENT CONFIGURATION (Service Discovery)
+# =====================================================
+eureka:
+  client:
+    service-url:
+      # Eureka Server URL
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+
+    # Register this service in Eureka
+    register-with-eureka: true
+
+    # Fetch other service registry information
+    fetch-registry: true
+
+  instance:
+    # Use IP instead of hostname (useful for Docker/K8s)
+    prefer-ip-address: true

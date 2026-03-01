@@ -1,0 +1,49 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: API-GATEWAY
+
+  cloud:
+    gateway:
+
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+      routes:
+
+        # NOTIFICATION SERVICE
+        - id: notification-service-notifications
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/api/email/**
+
+        # USER SERVICE
+        - id: user-service-auth
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/auth/**
+
+        - id: user-service-information
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/role/**
+
+        - id: user-service-manager
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/manager/**
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: TRACE
+    reactor.netty.http.client: DEBUG

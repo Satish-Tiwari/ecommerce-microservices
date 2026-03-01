@@ -9,6 +9,12 @@ import com.ecommerce.user_service.model.entity.User;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+    boolean existsByUsername(String username);
+
+    boolean existsByEmail(String email);
+
+    boolean existsByPhone(String phone);
+
     Optional<User> findByUsername(String username);
 
     Optional<User> findByEmail(String email);
