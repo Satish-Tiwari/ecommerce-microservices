@@ -1,9 +1,7 @@
 package com.ecommerce.notification_service.entity;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
 @Getter
 public enum PaymentStatus {
     
@@ -12,4 +10,8 @@ public enum PaymentStatus {
     COMPLETED("Completed");
 
     private final String status;
+
+    PaymentStatus(String status) {
+        this.status = status;
+    }
 }

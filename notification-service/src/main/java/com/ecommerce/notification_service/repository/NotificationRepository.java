@@ -5,6 +5,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import com.ecommerce.notification_service.entity.Notification;
 
 @Repository
-public class NotificationRepository extends MongoRepository<Notification, String> {
+public interface NotificationRepository extends MongoRepository<Notification, String> {
     
 }

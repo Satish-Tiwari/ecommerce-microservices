@@ -5,6 +5,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import com.ecommerce.notification_service.entity.Payment;
 
 @Repository
-public class PaymentRepository extends MongoRepository<Payment, String> {
+public interface PaymentRepository extends MongoRepository<Payment, String> {
     
 }
