@@ -10,6 +10,9 @@ http://localhost:8080/
 ## User Service
 http://localhost:8081/
 
+## Inventory Service
+http://localhost:8082/
+
 ## Notification Service
 http://localhost:8083/
 
