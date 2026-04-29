@@ -43,6 +43,18 @@ spring:
           predicates:
             - Path=/api/manager/**
 
+        # PRODUCT SERVICE
+        - id: product-service
+          uri: lb://PRODUCT-SERVICE
+          predicates:
+            - Path=/api/products/**, /api/categories/**
+
+        # FAVOURITE SERVICE
+        - id: favourite-service
+          uri: lb://FAVOURITE-SERVICE
+          predicates:
+            - Path=/api/favourites/**
+
 eureka:
   client:
     serviceUrl:

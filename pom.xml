@@ -1,88 +1,141 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         https://maven.apache.org/xsd/maven-4.0.0.xsd">
-
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- ============================= -->
-    <!-- PROJECT INFO -->
-    <!-- ============================= -->
-    <groupId>com.microservices</groupId>
-    <artifactId>ecommerce-microservices</artifactId>
-    <version>1.0.0</version>
-    <packaging>pom</packaging>
-
-    <name>ecommerce-microservices</name>
-
-    <!-- ============================= -->
-    <!-- SPRING BOOT PARENT -->
-    <!-- ============================= -->
+    <!-- =====================================================
+         SPRING BOOT PARENT
+         Provides default dependency versions, plugin configs,
+         and sensible defaults for all child modules.
+    ====================================================== -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.5</version> <!-- Java 17 stable -->
+        <version>3.3.5</version>
         <relativePath/>
     </parent>
 
-    <!-- ============================= -->
-    <!-- ALL MICROSERVICES -->
-    <!-- ============================= -->
+    <!-- =====================================================
+         PROJECT COORDINATES
+    ====================================================== -->
+    <groupId>com.ecommerce</groupId>
+    <artifactId>ecommerce-microservices</artifactId>
+    <version>${revision}</version>
+    <packaging>pom</packaging>
+    <name>Ecommerce Microservices</name>
+    <description>
+        Multi-module parent POM for the Ecommerce Microservices platform.
+        Centralizes dependency versions, plugin configurations, and
+        build settings shared across all child microservices.
+    </description>
+
+    <!-- =====================================================
+         MODULES (only services that exist on disk)
+    ====================================================== -->
     <modules>
-        <module>user-service</module>
+        <module>common-lib</module>
         <module>api-gateway</module>
         <module>discovery-service</module>
+        <module>user-service</module>
+        <module>product-service</module>
+        <module>inventory-service</module>
         <module>notification-service</module>
+        <module>favourite-service</module>
     </modules>
 
-    <!-- ============================= -->
-    <!-- GLOBAL PROPERTIES -->
-    <!-- ============================= -->
+    <!-- =====================================================
+         GLOBAL PROPERTIES
+         Single source of truth for global project settings.
+         All modules inherit these values.
+    ====================================================== -->
     <properties>
-        <java.version>17</java.version>
-        <spring-cloud.version>2023.0.1</spring-cloud.version>
+        <!-- Java & Encoding -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>17</java.version>
+
+        <!-- Project Version (CI-friendly) -->
+        <revision>1.0-SNAPSHOT</revision>
     </properties>
 
-    <!-- ============================= -->
-    <!-- DEPENDENCY VERSION MANAGEMENT -->
-    <!-- ============================= -->
-    <dependencyManagement>
-        <dependencies>
 
-            <!-- Spring Cloud BOM -->
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-        </dependencies>
-    </dependencyManagement>
-
-    <!-- ============================= -->
-    <!-- GLOBAL BUILD CONFIG -->
-    <!-- ============================= -->
+    <!-- =====================================================
+         BUILD CONFIGURATION
+         Plugin management: defines plugin versions & defaults
+         that child modules can activate without repeating config.
+    ====================================================== -->
     <build>
         <pluginManagement>
             <plugins>
 
-                <!-- Spring Boot Plugin -->
+                <!-- Spring Boot Maven Plugin -->
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
                 </plugin>
 
-                <!-- Java Compiler -->
+                <!-- Maven Compiler Plugin -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <configuration>
                         <source>${java.version}</source>
                         <target>${java.version}</target>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                            <path>
+                                <groupId>org.mapstruct</groupId>
+                                <artifactId>mapstruct-processor</artifactId>
+                                <version>${mapstruct.version}</version>
+                            </path>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok-mapstruct-binding</artifactId>
+                                <version>${lombok-mapstruct-binding.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+
+                <!-- JaCoCo (Code Coverage) -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.12</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>report</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <excludes>
+                            <exclude>com/ecommerce/**/*Application.class</exclude>
+                            <exclude>com/ecommerce/**/config/**</exclude>
+                            <exclude>com/ecommerce/**/exception/**</exclude>
+                            <exclude>com/ecommerce/**/constants/**</exclude>
+                        </excludes>
                     </configuration>
                 </plugin>
 

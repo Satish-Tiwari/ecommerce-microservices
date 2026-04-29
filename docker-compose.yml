@@ -1,6 +1,31 @@
-version: '3.8'
+version: '3.3'
 
 services:
+  # ==============================
+  # POSTGRESQL (User, Inventory, Product, Favourite)
+  # ==============================
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      # Note: Standard image creates one DB. 
+      # Child services will connect to this instance.
+      POSTGRES_DB: ecommerce_db 
+    restart: always
+
+  # ==============================
+  # MONGODB (Notification)
+  # ==============================
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    restart: always
 
   # ==============================
   # ZOOKEEPER
@@ -26,28 +51,16 @@ services:
       - zookeeper
     ports:
       - "9092:9092"
-      - "29092:29092"
     environment:
-
-      # Broker basics
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-
-      # Listeners
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
-
-      # Single node configs
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
   # ==============================
-  # KAFKA UI (SUPER USEFUL)
+  # KAFKA UI
   # ==============================
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -59,13 +72,13 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: local-kafka
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
-      DYNAMIC_CONFIG_ENABLED: "true"
 
   # ==============================
-  # ZIPKIN (for Sleuth tracing)
+  # ZIPKIN
   # ==============================
   zipkin:
     image: openzipkin/zipkin
     container_name: zipkin
     ports:
       - "9411:9411"
+    restart: always
