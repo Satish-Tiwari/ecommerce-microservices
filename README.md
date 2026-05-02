@@ -13,24 +13,24 @@ A high-performance, scalable microservices ecosystem for modern ecommerce, built
 
 ```mermaid
 graph TB
-    subgraph Client
+    subgraph "Client"
         WEB["Web / Mobile Client"]
     end
 
-    subgraph Edge Layer
+    subgraph "Edge Layer"
         GW["API Gateway<br/>:8080"]
         DS["Discovery Service<br/>(Eureka) :8761"]
     end
 
-    subgraph Core Services
+    subgraph "Core Services"
         US["User Service<br/>:8081"]
         IS["Inventory Service<br/>:8082"]
         NS["Notification Service<br/>:8083"]
-        PS["Product Service<br/>:TBD"]
-        FS["Favourite Service<br/>:TBD"]
+        PS["Product Service<br/>:8086"]
+        FS["Favourite Service<br/>:8084"]
     end
 
-    subgraph Infrastructure
+    subgraph "Infrastructure"
         KF["Apache Kafka<br/>:9092"]
         ZP["Zipkin<br/>:9411"]
         MG[("MongoDB")]
@@ -45,7 +45,7 @@ graph TB
     NS --> MG
     US & IS --> PG
     PS & FS --> MY
-    Core Services -.-> ZP
+    US & IS & NS & PS & FS -.-> ZP
 ```
 
 ---

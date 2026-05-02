@@ -3,7 +3,7 @@ package com.ecommerce.user_service.model.entity;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hibernate.annotations.ManyToAny;
+import jakarta.persistence.ManyToMany;
 import org.hibernate.annotations.NaturalId;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -30,7 +30,7 @@ import lombok.*;
 @Table(name = "users")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "userId", unique = true, nullable = false, updatable = false)
     private Long id;
 
@@ -71,7 +71,7 @@ public class User {
     @Column(name = "imageUrl")
     private String avatar;
 
-    @ManyToAny(fetch = jakarta.persistence.FetchType.LAZY)
+    @ManyToMany(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinTable(name = "user_role", joinColumns = @jakarta.persistence.JoinColumn(name = "user_id"), inverseJoinColumns = @jakarta.persistence.JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 }
