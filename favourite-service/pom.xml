@@ -5,12 +5,12 @@
 		<parent>
 		<groupId>com.ecommerce</groupId>
 		<artifactId>ecommerce-microservices</artifactId>
-		<version>1.0-SNAPSHOT</version>
+		<version>${revision}</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<groupId>com.ecommerce</groupId>
 	<artifactId>favourite-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>${revision}</version>
 	<name>favourite-service</name>
 	<description>Favourite Service</description>
 	<properties>
@@ -100,7 +100,7 @@
 		<dependency>
 			<groupId>com.ecommerce</groupId>
 			<artifactId>common-lib</artifactId>
-			<version>1.0-SNAPSHOT</version>
+			<version>${revision}</version>
 		</dependency>
 	</dependencies>
 

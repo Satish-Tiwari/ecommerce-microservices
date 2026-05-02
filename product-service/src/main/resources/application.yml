@@ -63,3 +63,11 @@ logging:
             data:
               rest: INFO
             orm: INFO
+
+jwt:
+  # Secret key (can be overridden using environment variable JWT_SECRET)
+  secret: ${JWT_SECRET:L8KwmXTT/ByT7e9ZiO0s5cGedE7cSfS5YKpC0Qn/qO8=}
+  # Access token expiration (seconds)
+  expiration: 86400
+  # Refresh token expiration (seconds)
+  refreshExpiration: 172800

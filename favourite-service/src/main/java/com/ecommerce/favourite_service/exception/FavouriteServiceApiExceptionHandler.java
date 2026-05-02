@@ -20,7 +20,7 @@ import java.util.Optional;
 @Slf4j
 @RequiredArgsConstructor
 @ControllerAdvice
-public class ApiExceptionHandler {
+public class FavouriteServiceApiExceptionHandler {
 
     @ExceptionHandler(value = {
             MethodArgumentNotValidException.class,
