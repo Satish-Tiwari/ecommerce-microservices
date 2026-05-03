@@ -16,7 +16,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"testuser\",\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\",\n    \"role\": [\"USER\"]\n}",
+							"raw": "{\n    \"fullname\": \"Test User\",\n    \"username\": \"testuser2\",\n    \"email\": \"testuser2@example.com\",\n    \"password\": \"Password123\",\n    \"gender\": \"MALE\",\n    \"phone\": \"0123456789\",\n    \"avatar\": \"https://example.com/avatar.jpg\",\n    \"roles\": [\"user\"]\n}",
 							"options": {
 								"raw": {
 									"language": "json"

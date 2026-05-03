@@ -15,7 +15,7 @@ public interface UserService {
 
     Mono<JwtResponseMessage> login(Login signInForm);
 
-    Mono<Void> logout();
+    Mono<String> logout();
 
     Mono<User> update(Long id, SignUp update);
 
@@ -26,6 +26,8 @@ public interface UserService {
     Mono<User> findById(Long userId);
 
     Mono<User> findByUsername(String userName);
+
+    Mono<com.ecommerce.user_service.model.dto.response.InformationMessage> getProfile();
 
     Mono<Page<UserDto>> findAllUsers(int page, int size, String sortBy, String sortOrder);
 }

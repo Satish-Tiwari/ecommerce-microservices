@@ -12,14 +12,14 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
-@ControllerAdvice
+@RestControllerAdvice
 @Slf4j
 @RequiredArgsConstructor
 public class ApiExceptionHandler {
@@ -28,17 +28,20 @@ public class ApiExceptionHandler {
                         MethodArgumentNotValidException.class,
                         HttpMessageNotReadableException.class
         })
-        public <T extends BindException> ResponseEntity<ExceptionMessage> handleValidationException(final T e) {
+        public ResponseEntity<ExceptionMessage> handleValidationException(final Exception e) {
                 log.info("ApiExceptionHandler controller, handle validation exception\n");
                 final var badRequest = HttpStatus.BAD_REQUEST;
 
+                String message = "Validation failed";
+                if (e instanceof BindException be) {
+                        message = Objects.requireNonNull(be.getBindingResult().getFieldError()).getDefaultMessage();
+                }
+
                 return new ResponseEntity<>(
                                 ExceptionMessage.builder()
-                                                .msg("*" + Objects.requireNonNull(e.getBindingResult().getFieldError())
-                                                                .getDefaultMessage() + "!**")
+                                                .msg("*" + message + "!**")
                                                 .httpStatus(badRequest)
-                                                .timestamp(ZonedDateTime
-                                                                .now(ZoneId.systemDefault()))
+                                                .timestamp(ZonedDateTime.now(ZoneId.systemDefault()))
                                                 .build(),
                                 badRequest);
         }
@@ -46,20 +49,46 @@ public class ApiExceptionHandler {
         @ExceptionHandler(value = {
                         UserNotFoundException.class,
                         RoleNotFoundException.class,
-                        PasswordNotFoundException.class,
                         EmailOrUsernameNotFoundException.class,
                         PhoneNumberNotFoundException.class
         })
-        public <T extends RuntimeException> ResponseEntity<ExceptionMessage> handleApiRequestException(final T e) {
-                log.info("ApiExceptionHandler controller, handle API request\n");
+        public ResponseEntity<ExceptionMessage> handleNotFoundException(final RuntimeException e) {
+                log.info("ApiExceptionHandler controller, handle Not Found exception: {}\n", e.getMessage());
+                final var notFound = HttpStatus.NOT_FOUND;
+
+                return new ResponseEntity<>(
+                                ExceptionMessage.builder()
+                                                .msg(e.getMessage())
+                                                .httpStatus(notFound)
+                                                .timestamp(ZonedDateTime.now(ZoneId.systemDefault()))
+                                                .build(),
+                                notFound);
+        }
+
+        @ExceptionHandler(UserAlreadyExistsException.class)
+        public ResponseEntity<ExceptionMessage> handleAlreadyExistsException(UserAlreadyExistsException e) {
+                log.info("ApiExceptionHandler controller, handle Already Exists exception: {}\n", e.getMessage());
+                final var conflict = HttpStatus.CONFLICT;
+
+                return new ResponseEntity<>(
+                                ExceptionMessage.builder()
+                                                .msg(e.getMessage())
+                                                .httpStatus(conflict)
+                                                .timestamp(ZonedDateTime.now(ZoneId.systemDefault()))
+                                                .build(),
+                                conflict);
+        }
+
+        @ExceptionHandler(PasswordNotFoundException.class)
+        public ResponseEntity<ExceptionMessage> handlePasswordException(PasswordNotFoundException e) {
+                log.info("ApiExceptionHandler controller, handle Password exception\n");
                 final var badRequest = HttpStatus.BAD_REQUEST;
 
                 return new ResponseEntity<>(
                                 ExceptionMessage.builder()
                                                 .msg(e.getMessage())
                                                 .httpStatus(badRequest)
-                                                .timestamp(ZonedDateTime
-                                                                .now(ZoneId.systemDefault()))
+                                                .timestamp(ZonedDateTime.now(ZoneId.systemDefault()))
                                                 .build(),
                                 badRequest);
         }

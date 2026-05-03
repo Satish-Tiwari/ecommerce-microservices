@@ -1,6 +1,7 @@
 package com.ecommerce.user_service.config;
 
 import com.ecommerce.user_service.security.jwt.JwtEntryPoint;
+import com.ecommerce.user_service.security.jwt.TokenBlacklistFilter;
 import com.ecommerce.user_service.security.userprinciple.UserDetailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,7 @@ public class WebSecurityConfig {
 
     private final UserDetailService userDetailService;
     private final JwtEntryPoint jwtEntryPoint;
+    private final TokenBlacklistFilter tokenBlacklistFilter;
 
     @Value("${jwt.secret}")
     private String jwtSecret;
@@ -64,8 +66,8 @@ public class WebSecurityConfig {
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/manager/user/**", "/v3/api-docs/**", "/swagger-ui/**",
-                                "/actuator/**")
+                        .requestMatchers("/api/auth/signup", "/api/auth/register", "/api/auth/signin", "/api/auth/login", 
+                                "/api/manager/user/**", "/v3/api-docs/**", "/swagger-ui/**", "/actuator/**")
                         .permitAll()
                         .requestMatchers("/api/manager/change-password", "/api/manager/delete/**", "/api/auth/logout")
                         .authenticated()
@@ -73,7 +75,8 @@ public class WebSecurityConfig {
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
-                                .decoder(jwtDecoder())));
+                                .decoder(jwtDecoder())))
+                .addFilterAfter(tokenBlacklistFilter, org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter.class);
 
         http.authenticationProvider(authenticationProvider());
         return http.build();

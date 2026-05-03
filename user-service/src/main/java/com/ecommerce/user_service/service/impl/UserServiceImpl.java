@@ -10,10 +10,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import com.ecommerce.user_service.exception.wrapper.EmailOrUsernameNotFoundException;
 import com.ecommerce.user_service.exception.wrapper.PasswordNotFoundException;
-import com.ecommerce.user_service.exception.wrapper.PhoneNumberNotFoundException;
+import com.ecommerce.user_service.exception.wrapper.UserAlreadyExistsException;
 import com.ecommerce.user_service.exception.wrapper.UserNotFoundException;
 import com.ecommerce.user_service.model.dto.request.ChangePasswordRequest;
 import com.ecommerce.user_service.model.dto.request.Login;
@@ -57,16 +55,16 @@ public class UserServiceImpl implements UserService {
     public Mono<User> register(SignUp signUp) {
         return Mono.fromCallable(() -> {
             if (userRepository.existsByUsername(signUp.getUsername())) {
-                throw new EmailOrUsernameNotFoundException(
-                        "The username " + signUp.getUsername() + " is existed, please try again.");
+                throw new UserAlreadyExistsException(
+                        "The username " + signUp.getUsername() + " already exists, please try again.");
             }
             if (userRepository.existsByEmail(signUp.getEmail())) {
-                throw new EmailOrUsernameNotFoundException(
-                        "The email " + signUp.getEmail() + " is existed, please try again.");
+                throw new UserAlreadyExistsException(
+                        "The email " + signUp.getEmail() + " already exists, please try again.");
             }
             if (userRepository.existsByPhone(signUp.getPhone())) {
-                throw new PhoneNumberNotFoundException(
-                        "The phone number " + signUp.getPhone() + " is existed, please try again.");
+                throw new UserAlreadyExistsException(
+                        "The phone number " + signUp.getPhone() + " already exists, please try again.");
             }
             User user = modelMapper.map(signUp, User.class);
             user.setPassword(passwordEncoder.encode(signUp.getPassword()));
@@ -115,6 +113,13 @@ public class UserServiceImpl implements UserService {
             String refreshToken = jwtProvider.createRefreshToken(authentication);
 
             UserPrinciple userPrinciple = (UserPrinciple) userDetails;
+            User user = userRepository.findByUsername(userPrinciple.username())
+                    .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+            user.setAccessToken(accessToken);
+            user.setRefreshToken(refreshToken);
+            user.setTokenCreatedAt(java.time.LocalDateTime.now());
+            userRepository.save(user);
 
             return JwtResponseMessage.builder()
                     .accessToken(accessToken)
@@ -135,19 +140,61 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Mono<Void> logout() {
-        return Mono.fromRunnable(() -> {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    public Mono<String> logout() {
+        // Capture context and token while still on the request thread
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentToken = getCurrentToken(authentication);
+        String username = (authentication != null) ? authentication.getName() : null;
 
+        return Mono.fromCallable(() -> {
+            if (username == null) {
+                return "User";
+            }
+
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+            // Compare stored token with the token used for this request
+            if (user.getAccessToken() == null || !user.getAccessToken().equals(currentToken)) {
+                return "ALREADY_LOGGED_OUT:" + username;
+            }
+
+            user.setAccessToken(null);
+            user.setRefreshToken(null);
+            user.setTokenCreatedAt(null);
+            userRepository.save(user);
             SecurityContextHolder.getContext().setAuthentication(null);
 
-            String currentToken = getCurrentToken();
+            return username;
+        }).subscribeOn(Schedulers.boundedElastic());
+    }
 
-            if (authentication != null && authentication.isAuthenticated()) {
-                // Invalidate the current token by reducing its expiration time.
-                String updatedToken = jwtProvider.reduceTokenExpiration(currentToken);
-            }
-        }).subscribeOn(Schedulers.boundedElastic()).then();
+    @Override
+    public Mono<InformationMessage> getProfile() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = (authentication != null) ? authentication.getName() : null;
+
+        if (username == null) {
+            return Mono.error(new UserNotFoundException("User not authenticated"));
+        }
+
+        return Mono.fromCallable(() -> {
+            User user = userRepository.findByUsernameWithRoles(username)
+                    .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+            return InformationMessage.builder()
+                    .id(user.getId())
+                    .fullname(user.getFullname())
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .phone(user.getPhone())
+                    .gender(user.getGender())
+                    .avatar(user.getAvatar())
+                    .roles(user.getRoles().stream()
+                            .map(role -> new org.springframework.security.core.authority.SimpleGrantedAuthority(role.getName().name()))
+                            .collect(java.util.stream.Collectors.toList()))
+                    .build();
+        }).subscribeOn(Schedulers.boundedElastic());
     }
 
     @Override
@@ -189,17 +236,18 @@ public class UserServiceImpl implements UserService {
         };
     }
 
-    private String getCurrentToken() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
+    private String getCurrentToken(Authentication authentication) {
         if (authentication != null && authentication.isAuthenticated()) {
             Object credentials = authentication.getCredentials();
 
-            if (credentials instanceof String) {
+            if (credentials instanceof String && !((String) credentials).isEmpty()) {
                 return (String) credentials;
             }
+            // For OAuth2 Resource Server
+            if (authentication.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt jwt) {
+                return jwt.getTokenValue();
+            }
         }
-
         return null;
     }
 }

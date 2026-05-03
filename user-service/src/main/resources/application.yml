@@ -77,8 +77,8 @@ logging:
 # SECURITY / JWT CONFIGURATION
 # =====================================================
 jwt:
-  # Secret key (can be overridden using environment variable JWT_SECRET)
-  secret: ${JWT_SECRET:L8KwmXTT/ByT7e9ZiO0s5cGedE7cSfS5YKpC0Qn/qO8=}
+  # Secret key (at least 64 characters/512 bits for HS512)
+  secret: ${JWT_SECRET:zdtl8KwmXTTByT7e9ZiO0s5cGedE7cSfS5YKpC0QnqO8zdtl8KwmXTTByT7e9ZiO0}
 
   # Access token expiration (seconds)
   expiration: 86400

@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.security.core.GrantedAuthority;
+import io.jsonwebtoken.security.Keys;
+import java.security.Key;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +27,11 @@ public class JwtProvider {
     @Value("${jwt.refreshExpiration}")
     private int jwtRefreshExpiration;
 
+    private Key getSigningKey() {
+        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
     public String createToken(Authentication authentication) {
         UserPrinciple userPrinciple = (UserPrinciple) authentication.getPrincipal();
 
@@ -36,7 +44,7 @@ public class JwtProvider {
                 .claim("authorities", authorities)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(new Date().getTime() + jwtExpiration * 1000L))
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -45,17 +53,16 @@ public class JwtProvider {
         return Jwts.builder()
                 .setSubject(userPrinciple.getUsername())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(new Date().getTime() + jwtRefreshExpiration * 1000L)) // jwtRefreshExpiration là
-                                                                                              // thời gian hiệu lực của
-                                                                                              // refresh token
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .setExpiration(new Date(new Date().getTime() + jwtRefreshExpiration * 1000L))
+                .signWith(getSigningKey())
                 .compact();
     }
 
     public String reduceTokenExpiration(String token) {
         // Decode the token to extract its claims
-        Claims claims = Jwts.parser()
-                .setSigningKey(jwtSecret)
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
 
@@ -65,14 +72,15 @@ public class JwtProvider {
         // Build a new token with the updated expiration time
         return Jwts.builder()
                 .setClaims(claims)
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .signWith(getSigningKey())
                 .compact();
     }
 
     public Boolean validateToken(String token) {
         try {
-            Jwts.parser()
-                    .setSigningKey(jwtSecret)
+            Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
                     .parseClaimsJws(token);
             return true;
         } catch (SignatureException e) {
@@ -91,8 +99,9 @@ public class JwtProvider {
 
     public String getUserNameFromToken(String token) {
         try {
-            Claims claims = Jwts.parser()
-                    .setSigningKey(jwtSecret)
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
                     .parseClaimsJws(token)
                     .getBody();
 

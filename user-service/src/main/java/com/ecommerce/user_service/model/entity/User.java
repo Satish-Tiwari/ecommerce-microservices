@@ -14,7 +14,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinTable;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -26,6 +25,7 @@ import lombok.*;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "users")
 public class User {
@@ -41,14 +41,14 @@ public class User {
 
     @NotBlank(message = "username is required")
     @Size(min = 3, max = 100, message = "username must be between 3 and 100 characters")
-    @Column(name = "userName", nullable = false)
+    @Column(name = "userName", nullable = false, unique = true)
     private String username;
 
     @NaturalId
     @NotBlank(message = "email is required")
     @Size(max = 50, message = "email must be less than 50 characters")
     @Email(message = "Input must be a in email format")
-    @Column(name = "email")
+    @Column(name = "email", unique = true, nullable = false)
     private String email;
 
     @JsonIgnore
@@ -67,11 +67,21 @@ public class User {
     private String phone;
 
     @Pattern(regexp = "^(http|https)://.*$", message = "Avatar URL must be a valid HTTP or HTTPS URL")
-    @Lob
-    @Column(name = "imageUrl")
+    @Column(name = "imageUrl", columnDefinition = "TEXT")
     private String avatar;
 
     @ManyToMany(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinTable(name = "user_role", joinColumns = @jakarta.persistence.JoinColumn(name = "user_id"), inverseJoinColumns = @jakarta.persistence.JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
+
+    @JsonIgnore
+    @Column(name = "access_token", columnDefinition = "TEXT")
+    private String accessToken;
+
+    @JsonIgnore
+    @Column(name = "refresh_token", columnDefinition = "TEXT")
+    private String refreshToken;
+
+    @Column(name = "token_created_at")
+    private java.time.LocalDateTime tokenCreatedAt;
 }

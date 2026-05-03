@@ -20,8 +20,10 @@ public class UserDetailService implements UserDetailsService {
     @Transactional
     public UserDetails loadUserByUsername(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new EmailOrUsernameNotFoundException(
-                        "Email or user does not exists. Try again letter..." + username));
+                .orElseThrow(() -> {
+                    return new EmailOrUsernameNotFoundException(
+                            "Email or user does not exists. Try again letter..." + username);
+                });
         return UserPrinciple.build(user);
     }
 
