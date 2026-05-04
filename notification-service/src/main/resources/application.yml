@@ -21,6 +21,10 @@ spring:
           auth: true
           starttls:
             enable: true
+            required: true
+          ssl:
+            protocols: TLSv1.2
+        debug: true
 
   kafka:
     bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
@@ -28,6 +32,14 @@ spring:
       retries: 3
       batch-size: 16384
       buffer-memory: 33554432
+    consumer:
+      group-id: notification-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.value.default.type: com.ecommerce.notification_service.event.UserEvent
 
   data:
     mongodb:

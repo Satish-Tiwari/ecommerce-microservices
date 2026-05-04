@@ -30,6 +30,9 @@ import org.springframework.data.domain.Page;
 
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import com.ecommerce.user_service.service.KafkaProducerService;
+import com.ecommerce.user_service.event.UserEvent;
+import com.ecommerce.user_service.constant.KafkaConstant;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -39,16 +42,18 @@ public class UserServiceImpl implements UserService {
     private final ModelMapper modelMapper;
     private final UserDetailService userDetailService;
     private final RoleService roleService;
+    private final KafkaProducerService kafkaProducerService;
 
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
             JwtProvider jwtProvider, ModelMapper modelMapper, UserDetailService userDetailService,
-            RoleService roleService) {
+            RoleService roleService, KafkaProducerService kafkaProducerService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
         this.modelMapper = modelMapper;
         this.userDetailService = userDetailService;
         this.roleService = roleService;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     @Override
@@ -77,7 +82,17 @@ public class UserServiceImpl implements UserService {
             System.out.println("User: ");
             System.out.println(user);
 
-            return userRepository.save(user);
+            User savedUser = userRepository.save(user);
+
+            // Send Kafka Event
+            kafkaProducerService.sendUserEvent(KafkaConstant.profileOnboarding, UserEvent.builder()
+                    .email(savedUser.getEmail())
+                    .firstName(savedUser.getFullname()) // Assuming fullname is used for first name or split
+                    .lastName("")
+                    .type("USER_CREATED")
+                    .build());
+
+            return savedUser;
         }).subscribeOn(Schedulers.boundedElastic());
     }
 
@@ -164,6 +179,14 @@ public class UserServiceImpl implements UserService {
             user.setTokenCreatedAt(null);
             userRepository.save(user);
             SecurityContextHolder.getContext().setAuthentication(null);
+
+            // Send Kafka Event
+            kafkaProducerService.sendUserEvent(KafkaConstant.userLogout, UserEvent.builder()
+                    .email(user.getEmail())
+                    .firstName(user.getFullname())
+                    .lastName("")
+                    .type("USER_LOGOUT")
+                    .build());
 
             return username;
         }).subscribeOn(Schedulers.boundedElastic());

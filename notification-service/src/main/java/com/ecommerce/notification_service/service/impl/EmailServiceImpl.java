@@ -95,4 +95,23 @@ public class EmailServiceImpl implements EmailService {
             return Mono.just("Error while Sending Mail");
         });
     }
+
+    @Override
+    public Mono<String> sendHtmlMail(EmailDetails details) {
+        return Mono.fromCallable(() -> {
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            mimeMessageHelper.setFrom(fromEmail);
+            mimeMessageHelper.setTo(details.getRecipient());
+            mimeMessageHelper.setSubject(details.getSubject());
+            mimeMessageHelper.setText(details.getMessageBody(), true);
+
+            javaMailSender.send(mimeMessage);
+            return "HTML Mail Sent Successfully...";
+        }).onErrorResume(ex -> {
+            log.error("Error while sending HTML mail", ex);
+            return Mono.just("Error while Sending HTML Mail");
+        });
+    }
 }
