@@ -22,7 +22,7 @@ import java.util.Objects;
 @RestControllerAdvice
 @Slf4j
 @RequiredArgsConstructor
-public class ApiExceptionHandler {
+public class UserApiExceptionHandler {
 
         @ExceptionHandler(value = {
                         MethodArgumentNotValidException.class,

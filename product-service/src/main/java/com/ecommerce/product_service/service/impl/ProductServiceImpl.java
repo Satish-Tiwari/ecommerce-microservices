@@ -10,7 +10,6 @@ import com.ecommerce.product_service.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -28,13 +27,13 @@ public class ProductServiceImpl implements ProductService {
     public Flux<List<ProductDto>> findAll() {
         log.info("ProductDto List, service, fetch all products");
         return Flux.defer(() -> {
-                    List<ProductDto> productDtos = productRepository.findAll()
-                            .stream()
-                            .map(ProductMappingHelper::map)
-                            .distinct()
-                            .toList();
-                    return Flux.just(productDtos);
-                })
+            List<ProductDto> productDtos = productRepository.findAll()
+                    .stream()
+                    .map(ProductMappingHelper::map)
+                    .distinct()
+                    .toList();
+            return Flux.just(productDtos);
+        })
                 .onErrorResume(throwable -> {
                     log.error("Error while fetching products: " + throwable.getMessage());
                     return Flux.empty();
@@ -46,7 +45,8 @@ public class ProductServiceImpl implements ProductService {
         log.info("ProductDto, service; fetch product by id");
         return productRepository.findById(productId)
                 .map(ProductMappingHelper::map)
-                .orElseThrow(() -> new ProductNotFoundException(String.format("Product with id[%d] not found", productId)));
+                .orElseThrow(
+                        () -> new ProductNotFoundException(String.format("Product with id[%d] not found", productId)));
     }
 
     @Override
@@ -68,7 +68,8 @@ public class ProductServiceImpl implements ProductService {
         log.info("ProductDto, service; update product");
 
         Product existingProduct = productRepository.findById(productDto.getProductId())
-                .orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + productDto.getProductId()));
+                .orElseThrow(
+                        () -> new ProductNotFoundException("Product not found with id: " + productDto.getProductId()));
 
         BeanUtils.copyProperties(productDto, existingProduct, "productId", "categoryDto");
 
@@ -92,11 +93,11 @@ public class ProductServiceImpl implements ProductService {
         // Update Product using BeanUtils.copyProperties
         BeanUtils.copyProperties(productDto, existingProduct, "productId", "category");
 
-//        // Or Using Model Mapper Create a ModelMapper instance
-//        ModelMapper modelMapper = new ModelMapper();
-//
-//        // Map properties from productDto to existingProduct
-//        modelMapper.map(productDto, existingProduct);
+        // // Or Using Model Mapper Create a ModelMapper instance
+        // ModelMapper modelMapper = new ModelMapper();
+        //
+        // // Map properties from productDto to existingProduct
+        // modelMapper.map(productDto, existingProduct);
 
         // If categoryDto is not null, map it to Category
         if (productDto.getCategoryDto() != null) {

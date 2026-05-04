@@ -13,6 +13,17 @@ spring:
           enabled: true
           lower-case-service-id: true
 
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+
       routes:
 
         # INVENTORY-SERVICE

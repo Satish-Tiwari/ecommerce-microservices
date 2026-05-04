@@ -49,7 +49,7 @@ springdoc:
 
 logging:
   file:
-    name: src/main/resources/script/stage_log.log
+    name: logs/product-service.log
     clean-history-on-start: true
   level:
     org:

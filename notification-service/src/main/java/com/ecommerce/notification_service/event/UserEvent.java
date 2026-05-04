@@ -13,5 +13,5 @@ public class UserEvent {
     private String email;
     private String firstName;
     private String lastName;
-    private String type; // USER_CREATED, USER_LOGOUT
+    private String type; // USER_CREATED, USER_LOGIN, USER_LOGOUT
 }

@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #0f172a;
+    --surface: #f8fafc;
+    --surface-hover: #f1f5f9;
+    --card: #ffffff;
+    --card-border: #e2e8f0;
+    --primary: #0f172a;
+    --primary-foreground: #ffffff;
+    --secondary: #f1f5f9;
+    --secondary-foreground: #0f172a;
+    --accent: #3b82f6;
+    --accent-foreground: #ffffff;
+    --muted: #64748b;
+    --muted-foreground: #94a3b8;
+    --border: #e2e8f0;
+    --input: #f8fafc;
+    --ring: #3b82f6;
+  }
+
+  .dark {
+    --background: #000000;
+    --foreground: #ffffff;
+    --surface: #0a0a0a;
+    --surface-hover: #171717;
+    --card: #000000;
+    --card-border: rgba(255, 255, 255, 0.1);
+    --primary: #ffffff;
+    --primary-foreground: #000000;
+    --secondary: #111111;
+    --secondary-foreground: #ffffff;
+    --accent: #ffffff;
+    --accent-foreground: #000000;
+    --muted: #525252;
+    --muted-foreground: #a3a3a3;
+    --border: rgba(255, 255, 255, 0.1);
+    --input: rgba(255, 255, 255, 0.05);
+    --ring: #ffffff;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    @apply antialiased transition-colors duration-300;
+  }
+
+  /* Premium background with subtle radial glow - only for dark mode */
+  .dark body::before {
+    content: '';
+    @apply fixed inset-0 pointer-events-none z-0;
+    background: 
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 0% 100%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+  }
+
+  ::-webkit-scrollbar { @apply w-1.5; }
+  ::-webkit-scrollbar-track { background: var(--background); }
+  ::-webkit-scrollbar-thumb { 
+    background: var(--muted-foreground);
+    @apply rounded-full opacity-20 hover:opacity-40 transition-opacity;
+  }
+}
+
+@layer components {
+  .glass {
+    background: var(--input);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    @apply rounded-2xl;
+  }
+
+  .glass-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    @apply rounded-2xl transition-all duration-300 ease-out;
+  }
+  
+  .glass-card:hover {
+    background: var(--surface-hover);
+    @apply shadow-lg transform translate-y-[-2px];
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3
+           font-bold rounded-xl active:scale-[0.98]
+           transition-all duration-300 shadow-md;
+  }
+
+  .btn-primary:hover {
+    @apply opacity-90 brightness-110;
+  }
+
+  .btn-secondary {
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+    border: 1px solid var(--card-border);
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3
+           font-semibold rounded-xl active:scale-[0.98] 
+           transition-all duration-300 hover:brightness-105;
+  }
+
+  .input-field {
+    background-color: var(--input);
+    border: 1px solid var(--card-border);
+    color: var(--foreground);
+    @apply w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20
+           transition-all duration-300;
+  }
+
+  .input-field::placeholder {
+    color: var(--muted);
+  }
+
+  .input-error {
+    @apply border-red-500/50 focus:border-red-500 focus:ring-red-500/10;
+  }
+
+  .nav-link {
+    color: var(--muted);
+    @apply hover:text-foreground transition-colors duration-200 text-sm font-medium;
+  }
+
+  .active-link {
+    color: var(--foreground);
+    @apply relative after:absolute after:-bottom-1 after:left-0 
+           after:w-full after:h-0.5 after:bg-primary after:rounded-full;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  @apply w-1.5;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  @apply rounded-full transition-colors;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}

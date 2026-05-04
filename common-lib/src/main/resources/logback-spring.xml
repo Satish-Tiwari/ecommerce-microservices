@@ -14,7 +14,7 @@
 
     <appender name="CONSOLE"
               class="ch.qos.logback.core.ConsoleAppender">
-        <Target>${user-system}.out</Target>
+        <Target>System.out</Target>
         <encoder>
             <pattern>${CONSOLE_LOG_PATTERN}</pattern>
             <charset>${ENCODING}</charset>

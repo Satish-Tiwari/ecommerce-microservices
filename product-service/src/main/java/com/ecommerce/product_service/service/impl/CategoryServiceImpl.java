@@ -37,13 +37,13 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public Flux<List<CategoryDto>> findAll() {
+        System.out.println("Category List Service, fetch all category");
         log.info("Category List Service, fetch all category");
         return Flux.just(categoryRepository.findAll())
                 .flatMap(categories -> Flux.fromIterable(categories)
-                                .map(CategoryMappingHelper::map)
-                                .distinct()
-                                .collectList()
-                )
+                        .map(CategoryMappingHelper::map)
+                        .distinct()
+                        .collectList())
                 .map(categoryDtos -> {
                     log.info("Categories fetched successfully");
                     return categoryDtos;
@@ -53,18 +53,6 @@ public class CategoryServiceImpl implements CategoryService {
                     return Mono.just(Collections.emptyList());
                 });
     }
-
-
-//    @Override
-//    public List<CategoryDto> findAll() {
-//        log.info("*** CategoryDto List, service; fetch all categorys *");
-//        return this.categoryRepository.findAll()
-//                .stream()
-//                .map(CategoryMappingHelper::map)
-//                .distinct()
-//                .collect(Collectors.toUnmodifiableList());
-//    }
-
 
     @Override
     public Page<CategoryDto> findAllCategory(int page, int size) {
@@ -81,7 +69,6 @@ public class CategoryServiceImpl implements CategoryService {
 
         return new PageImpl<>(categoryDtos, pageable, categoryPage.getTotalElements());
     }
-
 
     // Paging and Sorting Categories
     @Override
@@ -100,13 +87,13 @@ public class CategoryServiceImpl implements CategoryService {
         }
     }
 
-
     @Override
     public CategoryDto findById(Integer categoryId) {
         log.info("CategoryDto Service, fetch category by id");
         return categoryRepository.findById(categoryId)
                 .map(CategoryMappingHelper::map)
-                .orElseThrow(() -> new CategoryNotFoundException(String.format("Category with id[%d] not found", categoryId)));
+                .orElseThrow(() -> new CategoryNotFoundException(
+                        String.format("Category with id[%d] not found", categoryId)));
     }
 
     @Override
@@ -114,10 +101,10 @@ public class CategoryServiceImpl implements CategoryService {
         log.info("CategoryDto, service; save category");
         return Mono.just(categoryDto)
                 .map(CategoryMappingHelper::map)
-                .flatMap(category ->
-                        Mono.fromCallable(() -> CategoryMappingHelper.map(categoryRepository.save(category)))
-                                .onErrorMap(DataIntegrityViolationException.class, e -> new CategoryNotFoundException("Bad Request", e))
-                );
+                .flatMap(category -> Mono
+                        .fromCallable(() -> CategoryMappingHelper.map(categoryRepository.save(category)))
+                        .onErrorMap(DataIntegrityViolationException.class,
+                                e -> new CategoryNotFoundException("Bad Request", e)));
     }
 
     @Override
@@ -126,7 +113,8 @@ public class CategoryServiceImpl implements CategoryService {
 
         try {
             Category existingCategory = categoryRepository.findById(categoryDto.getCategoryId())
-                    .orElseThrow(() -> new CategoryNotFoundException("Category not found with id: " + categoryDto.getCategoryId()));
+                    .orElseThrow(() -> new CategoryNotFoundException(
+                            "Category not found with id: " + categoryDto.getCategoryId()));
 
             BeanUtils.copyProperties(categoryDto, existingCategory, "categoryId", "parentCategoryDto");
 
@@ -137,7 +125,8 @@ public class CategoryServiceImpl implements CategoryService {
             return CategoryMappingHelper.map(categoryRepository.save(existingCategory));
         } catch (CategoryNotFoundException e) {
             log.error("Error updating category. Category with id [{}] not found.", categoryDto.getCategoryId());
-            throw new CategoryNotFoundException(String.format("Category with id [%d] not found.", categoryDto.getCategoryId()), e);
+            throw new CategoryNotFoundException(
+                    String.format("Category with id [%d] not found.", categoryDto.getCategoryId()), e);
         } catch (DataIntegrityViolationException e) {
             log.error("Error updating category: Data integrity violation", e);
             throw new CategoryNotFoundException("Error updating category: Data integrity violation", e);
@@ -146,7 +135,6 @@ public class CategoryServiceImpl implements CategoryService {
             throw new CategoryNotFoundException("Error updating category", e);
         }
     }
-
 
     @Override
     public CategoryDto update(Integer categoryId, CategoryDto categoryDto) {
@@ -180,7 +168,6 @@ public class CategoryServiceImpl implements CategoryService {
             throw new CategoryNotFoundException("Error updating category", e);
         }
     }
-
 
     @Override
     public void deleteById(Integer categoryId) {

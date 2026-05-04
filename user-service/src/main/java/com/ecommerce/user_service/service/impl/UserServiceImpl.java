@@ -79,9 +79,6 @@ public class UserServiceImpl implements UserService {
                             .orElseThrow(() -> new RuntimeException("Role not found: " + role)))
                     .collect(Collectors.toSet()));
 
-            System.out.println("User: ");
-            System.out.println(user);
-
             User savedUser = userRepository.save(user);
 
             // Send Kafka Event
@@ -135,6 +132,14 @@ public class UserServiceImpl implements UserService {
             user.setRefreshToken(refreshToken);
             user.setTokenCreatedAt(java.time.LocalDateTime.now());
             userRepository.save(user);
+
+            // Send Kafka Event
+            kafkaProducerService.sendUserEvent(KafkaConstant.userLogin, UserEvent.builder()
+                    .email(userPrinciple.email())
+                    .firstName(userPrinciple.fullname())
+                    .lastName("")
+                    .type("USER_LOGIN")
+                    .build());
 
             return JwtResponseMessage.builder()
                     .accessToken(accessToken)
@@ -214,7 +219,8 @@ public class UserServiceImpl implements UserService {
                     .gender(user.getGender())
                     .avatar(user.getAvatar())
                     .roles(user.getRoles().stream()
-                            .map(role -> new org.springframework.security.core.authority.SimpleGrantedAuthority(role.getName().name()))
+                            .map(role -> new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                                    role.getName().name()))
                             .collect(java.util.stream.Collectors.toList()))
                     .build();
         }).subscribeOn(Schedulers.boundedElastic());
