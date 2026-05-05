@@ -8,28 +8,39 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Set;
 
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true, exclude = {"subCategories", "parentCategory", "products"})
-@Data
 @Builder
+@ToString(exclude = { "subCategories", "products", "parentCategory" })
 @Entity
 @Table(name = "categories")
-public final class Category extends AbstractMappedEntity implements Serializable {
+public class Category implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "category_id", unique = true, nullable = false, updatable = false)
-    private Integer categoryId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false, length = 36)
+    private String id;
 
     @Column(name = "category_title")
     private String categoryTitle;
 
     @Column(name = "image_url")
     private String imageUrl;
+
+    @Lob
+    @Column(name = "image_data", length = 1000000)
+    private byte[] imageData;
+
+    @Column(name = "image_name")
+    private String imageName;
+
+    @Column(name = "content_type")
+    private String contentType;
 
     @JsonIgnore
     @OneToMany(mappedBy = "parentCategory", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

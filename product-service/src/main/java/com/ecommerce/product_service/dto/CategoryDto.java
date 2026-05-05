@@ -2,36 +2,41 @@ package com.ecommerce.product_service.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Set;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CategoryDto implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private Integer categoryId;
+    // ─── Identity ────────────────────────────────────────────────────────────
+    private String id;
     private String categoryTitle;
+
+    // ─── Image ───────────────────────────────────────────────────────────────
     private String imageUrl;
+    private String imageName;
+    private String contentType;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private Set<CategoryDto> subCategoriesDtos;
-
+    // ─── Hierarchy ───────────────────────────────────────────────────────────
     @JsonProperty("parentCategory")
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     private CategoryDto parentCategoryDto;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private Set<ProductDto> productDtos;
+    private String parentCategoryId;   // convenience: just the parent's UUID for create/update
 
+    @JsonProperty("subCategories")
+    private List<CategoryDto> subCategoryDtos;
+
+    // ─── Nested products (optional, only returned on detail endpoints) ────────
+    @JsonProperty("products")
+    private List<ProductDto> productDtos;
 }

@@ -5,7 +5,7 @@ import com.ecommerce.product_service.entity.Category;
 import com.ecommerce.product_service.exception.wrapper.CategoryNotFoundException;
 import com.ecommerce.product_service.helper.CategoryMappingHelper;
 import com.ecommerce.product_service.repository.CategoryRepository;
-import com.ecommerce.product_service.repository.CategoryRepositoryPagingAndSorting;
+
 import com.ecommerce.product_service.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,8 +32,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Autowired
     private final CategoryRepository categoryRepository;
 
-    @Autowired
-    private final CategoryRepositoryPagingAndSorting categoryRepositoryPagingAndSorting;
+
 
     @Override
     public Flux<List<CategoryDto>> findAll() {
@@ -75,7 +74,7 @@ public class CategoryServiceImpl implements CategoryService {
     public List<CategoryDto> getAllCategories(Integer pageNo, Integer pageSize, String sortBy) {
         Pageable paging = PageRequest.of(pageNo, pageSize, Sort.by(sortBy));
 
-        Page<Category> pagedResult = categoryRepositoryPagingAndSorting.findAllPagedAndSortedCategories(paging);
+        Page<Category> pagedResult = categoryRepository.findAll(paging);
 
         if (pagedResult.hasContent()) {
             return pagedResult.getContent()
