@@ -40,6 +40,7 @@ public class UserAuth {
         })
         @PostMapping({ "/signup", "/register" })
         public Mono<ResponseEntity<ResponseMessage>> register(@Valid @RequestBody SignUp signUp) {
+                log.debug("Entering register user with email: {}", signUp.getEmail());
                 return userService.register(signUp)
                                 .map(user -> ResponseEntity.ok(new ResponseMessage("User registered successfully")));
         }
@@ -51,6 +52,7 @@ public class UserAuth {
         })
         @PostMapping({ "/signin", "/login" })
         public Mono<ResponseEntity<JwtResponseMessage>> login(@Valid @RequestBody Login signInForm) {
+                log.debug("Entering login user with username: {}", signInForm.getUsername());
                 return userService.login(signInForm)
                                 .map(ResponseEntity::ok);
         }
@@ -63,6 +65,7 @@ public class UserAuth {
         @PostMapping("/logout")
         @PreAuthorize("isAuthenticated() and hasAuthority('ROLE_USER')")
         public Mono<ResponseEntity<ResponseMessage>> logout() {
+                log.debug("Entering logout user");
                 return userService.logout()
                                 .map(result -> {
                                         if (result.startsWith("ALREADY_LOGGED_OUT:")) {
@@ -83,6 +86,7 @@ public class UserAuth {
         @GetMapping("/profile")
         @PreAuthorize("isAuthenticated()")
         public Mono<ResponseEntity<InformationMessage>> getProfile() {
+                log.debug("Entering getProfile");
                 return userService.getProfile()
                                 .map(ResponseEntity::ok);
         }

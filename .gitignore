@@ -4,3 +4,5 @@
 target/
 *.flattened-pom.xml
 *.log*
+.kilo
+.agent

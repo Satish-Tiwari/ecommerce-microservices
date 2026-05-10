@@ -5,6 +5,9 @@ spring:
   application:
     name: API-GATEWAY
 
+  codec:
+    max-in-memory-size: 50MB
+
   cloud:
     gateway:
 
