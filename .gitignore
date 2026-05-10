@@ -6,3 +6,4 @@ target/
 *.log*
 .kilo
 .agent
+uploads
