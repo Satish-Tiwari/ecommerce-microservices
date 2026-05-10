@@ -12,11 +12,9 @@ import java.util.Optional;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, String> {
-
     // ─── Search ──────────────────────────────────────────────────────────────
     Page<Category> findByCategoryTitleContainingIgnoreCase(String keyword, Pageable pageable);
 
-    // ─── Hierarchy ───────────────────────────────────────────────────────────
     /** All root categories (no parent) */
     List<Category> findByParentCategoryIsNull();
 

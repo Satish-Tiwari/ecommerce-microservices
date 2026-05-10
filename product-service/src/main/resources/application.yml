@@ -1,9 +1,18 @@
 server:
   port: 8086
 
+app:
+  upload-dir: uploads
+  base-url: http://localhost:8086
+
 spring:
   application:
     name: PRODUCT-SERVICE
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
 
   datasource:
     url: jdbc:postgresql://localhost:5432/product-service

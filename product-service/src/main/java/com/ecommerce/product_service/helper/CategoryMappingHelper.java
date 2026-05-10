@@ -6,7 +6,6 @@ import com.ecommerce.product_service.dto.CategoryDto;
 import java.util.Optional;
 
 public interface CategoryMappingHelper {
-
     /**
      * Maps a Category entity to a CategoryDto.
      * Includes a shallow parent (no recursive nesting).

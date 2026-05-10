@@ -8,38 +8,41 @@ import java.util.List;
 public interface MediaService {
 
     /**
-     * Saves a file to the filesystem and database.
-     * WordPress-style folder strategy (/uploads/yyyy/MM/dd/).
+     * Uploads single or multiple files.
      *
-     * @param file The file to save
-     * @return The Media entity
+     * Backend automatically generates
+     * upload batch and storage structure.
+     *
+     * @param files multipart files
+     * @return uploaded media list
      */
-    Media saveFile(MultipartFile file);
+    List<Media> saveFiles(List<MultipartFile> files);
 
     /**
-     * Deletes media from the filesystem and database.
+     * Deletes media metadata
+     * and physical file.
      *
-     * @param mediaId The ID of the media to delete
+     * @param mediaId media identifier
      */
     void deleteMedia(String mediaId);
 
     /**
-     * Physically deletes a file from the filesystem.
+     * Deletes physical file only.
      *
-     * @param relativePath The relative path to the file
+     * @param relativePath stored relative path
      */
-    void deleteFile(String relativePath);
+    void deletePhysicalFile(String relativePath);
 
     /**
-     * Generates a full URL for the given relative path.
+     * Generates full public URL.
      *
-     * @param relativePath The relative path
-     * @return The full URL string
+     * @param relativePath relative file path
+     * @return public URL
      */
     String getFullUrl(String relativePath);
 
     /**
-     * Strong garbage collector to find and delete orphaned media records and files.
+     * Removes orphaned media/files.
      */
     void garbageCollect();
 }

@@ -2,13 +2,10 @@ package com.ecommerce.product_service.helper;
 
 import com.ecommerce.product_service.dto.*;
 import com.ecommerce.product_service.entity.*;
-
-import java.util.Collections;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public interface ProductMappingHelper {
-
+        
     static ProductDto map(final Product product) {
         ProductDto.ProductDtoBuilder builder = ProductDto.builder()
                 .id(product.getId())

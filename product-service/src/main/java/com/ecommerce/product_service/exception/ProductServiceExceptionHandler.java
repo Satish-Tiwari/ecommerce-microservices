@@ -13,9 +13,12 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -71,6 +74,25 @@ public class ProductServiceExceptionHandler {
     public ResponseEntity<ExceptionMessage> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
         log.warn("Media type not supported: {} - {}", ex.getContentType(), request.getRequestURI());
         return buildResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE, ex.getMessage(), "ERR_UNSUPPORTED_MEDIA_TYPE", request.getRequestURI(), null);
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ExceptionMessage> handleMissingServletRequestPartException(MissingServletRequestPartException ex, HttpServletRequest request) {
+        log.warn("Missing request part: {} - {}", ex.getRequestPartName(), request.getRequestURI());
+        return buildResponse(HttpStatus.BAD_REQUEST, "Required request part '" + ex.getRequestPartName() + "' is not present", "ERR_MISSING_PART", request.getRequestURI(), null);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ExceptionMessage> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex, HttpServletRequest request) {
+        log.warn("File size limit exceeded: {}", request.getRequestURI());
+        return buildResponse(HttpStatus.PAYLOAD_TOO_LARGE, "File size limit exceeded", "ERR_FILE_TOO_LARGE", request.getRequestURI(), null);
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ExceptionMessage> handleMultipartException(MultipartException ex, HttpServletRequest request) {
+        log.warn("Multipart parsing failed: {} - {}", ex.getMessage(), request.getRequestURI());
+        String message = "Failed to parse multipart request. Ensure you are not manually setting the Content-Type header in Postman.";
+        return buildResponse(HttpStatus.BAD_REQUEST, message, "ERR_MULTIPART_PARSE_FAILED", request.getRequestURI(), null);
     }
 
     @ExceptionHandler(Exception.class)
