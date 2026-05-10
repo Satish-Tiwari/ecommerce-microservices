@@ -29,18 +29,9 @@ public class Category implements Serializable {
     @Column(name = "category_title")
     private String categoryTitle;
 
-    @Column(name = "image_url")
-    private String imageUrl;
-
-    @Lob
-    @Column(name = "image_data", length = 1000000)
-    private byte[] imageData;
-
-    @Column(name = "image_name")
-    private String imageName;
-
-    @Column(name = "content_type")
-    private String contentType;
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "media_id")
+    private Media media;
 
     @JsonIgnore
     @OneToMany(mappedBy = "parentCategory", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

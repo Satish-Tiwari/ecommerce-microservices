@@ -7,36 +7,59 @@ import java.util.Optional;
 
 public interface CategoryMappingHelper {
 
+    /**
+     * Maps a Category entity to a CategoryDto.
+     * Includes a shallow parent (no recursive nesting).
+     */
     static CategoryDto map(final Category category) {
         final var parentCategory = Optional.ofNullable(category.getParentCategory())
-                .orElseGet(Category::new);
-        return CategoryDto.builder()
-                .categoryId(category.getCategoryId())
-                .categoryTitle(category.getCategoryTitle())
-                .imageUrl(category.getImageUrl())
-                .parentCategoryDto(
-                        CategoryDto.builder()
-                                .categoryId(parentCategory.getCategoryId())
-                                .categoryTitle(parentCategory.getCategoryTitle())
-                                .imageUrl(parentCategory.getImageUrl())
-                                .build()
-                )
-                .build();
+                .orElse(null);
+
+        CategoryDto.CategoryDtoBuilder builder = CategoryDto.builder()
+                .id(category.getId())
+                .categoryTitle(category.getCategoryTitle());
+
+        if (category.getMedia() != null) {
+            builder.imageUrl(category.getMedia().getFilePath())
+                   .imageName(category.getMedia().getFileName())
+                   .contentType(category.getMedia().getFileType());
+        }
+
+        if (parentCategory != null) {
+            CategoryDto.CategoryDtoBuilder parentBuilder = CategoryDto.builder()
+                            .id(parentCategory.getId())
+                            .categoryTitle(parentCategory.getCategoryTitle());
+            
+            if (parentCategory.getMedia() != null) {
+                parentBuilder.imageUrl(parentCategory.getMedia().getFilePath());
+            }
+            
+            builder.parentCategoryDto(parentBuilder.build());
+            builder.parentCategoryId(parentCategory.getId());
+        }
+
+        return builder.build();
     }
 
-    static Category map(CategoryDto categoryDto) {
-        final var parentCategoryDto = Optional.ofNullable(categoryDto.getParentCategoryDto())
-                .orElseGet(CategoryDto::new);
+    /**
+     * Maps a CategoryDto to a Category entity.
+     * Does NOT resolve parentCategory — the service layer handles that.
+     */
+    static Category map(final CategoryDto categoryDto) {
         return Category.builder()
-                .categoryId(categoryDto.getCategoryId())
+                .id(categoryDto.getId())
                 .categoryTitle(categoryDto.getCategoryTitle())
-                .imageUrl(categoryDto.getImageUrl())
-                .parentCategory(Category.builder()
-                        .categoryId(parentCategoryDto.getCategoryId())
-                        .categoryTitle(parentCategoryDto.getCategoryTitle())
-                        .imageUrl(parentCategoryDto.getImageUrl())
-                        .build())
                 .build();
     }
 
+    /** Maps a Category entity to CategoryDto including all sub-categories recursively. */
+    static CategoryDto mapWithChildren(final Category category) {
+        CategoryDto dto = map(category);
+        if (category.getSubCategories() != null && !category.getSubCategories().isEmpty()) {
+            dto.setSubCategoryDtos(category.getSubCategories().stream()
+                    .map(CategoryMappingHelper::mapWithChildren)
+                    .toList());
+        }
+        return dto;
+    }
 }

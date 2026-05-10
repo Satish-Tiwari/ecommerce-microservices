@@ -8,12 +8,11 @@ import java.util.List;
 
 @Repository
 public interface ProductImageRepository extends JpaRepository<ProductImage, String> {
-
-    /** All images for a product (respects @OrderColumn sort_order) */
-    List<ProductImage> findByProductIdOrderBySortOrderAsc(String productId);
-
-    /** All images for a product (fallback without sort order) */
+    /** All images for a product */
     List<ProductImage> findByProductId(String productId);
+
+    /** All images for a product ordered by sort order */
+    List<ProductImage> findByProductIdOrderBySortOrderAsc(String productId);
 
     /** Delete all images for a product */
     void deleteByProductId(String productId);

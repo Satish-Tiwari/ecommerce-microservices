@@ -17,15 +17,14 @@ public class ProductImage {
     @Column(length = 36)
     private String id;
 
-    @Lob
-    @Column(name = "image_data", length = 1000000)
-    private byte[] imageData;
 
-    @Column(name = "image_name")
-    private String imageName;
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "media_id")
+    private Media media;
 
-    @Column(name = "content_type")
-    private String contentType;
+    @Builder.Default
+    @Column(name = "sort_order")
+    private Integer sortOrder = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")

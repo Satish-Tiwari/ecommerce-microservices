@@ -2,180 +2,215 @@ package com.ecommerce.product_service.service.impl;
 
 import com.ecommerce.product_service.dto.CategoryDto;
 import com.ecommerce.product_service.entity.Category;
+import com.ecommerce.product_service.entity.Media;
 import com.ecommerce.product_service.exception.wrapper.CategoryNotFoundException;
 import com.ecommerce.product_service.helper.CategoryMappingHelper;
 import com.ecommerce.product_service.repository.CategoryRepository;
-
 import com.ecommerce.product_service.service.CategoryService;
+import com.ecommerce.product_service.service.MediaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class CategoryServiceImpl implements CategoryService {
-    private final ModelMapper modelMapper;
 
-    @Autowired
     private final CategoryRepository categoryRepository;
-
-
-
-    @Override
-    public Flux<List<CategoryDto>> findAll() {
-        System.out.println("Category List Service, fetch all category");
-        log.info("Category List Service, fetch all category");
-        return Flux.just(categoryRepository.findAll())
-                .flatMap(categories -> Flux.fromIterable(categories)
-                        .map(CategoryMappingHelper::map)
-                        .distinct()
-                        .collectList())
-                .map(categoryDtos -> {
-                    log.info("Categories fetched successfully");
-                    return categoryDtos;
-                })
-                .onErrorResume(throwable -> {
-                    log.error("Error while fetching categories: " + throwable.getMessage());
-                    return Mono.just(Collections.emptyList());
-                });
-    }
+    private final MediaService mediaService;
 
     @Override
-    public Page<CategoryDto> findAllCategory(int page, int size) {
-        log.info("*** CategoryDto List, service; fetch all categories ***");
-
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Category> categoryPage = categoryRepository.findAll(pageable);
-
-        List<CategoryDto> categoryDtos = categoryPage.getContent()
-                .stream()
-                .map(CategoryMappingHelper::map)
-                .distinct()
-                .collect(Collectors.toList());
-
-        return new PageImpl<>(categoryDtos, pageable, categoryPage.getTotalElements());
-    }
-
-    // Paging and Sorting Categories
-    @Override
-    public List<CategoryDto> getAllCategories(Integer pageNo, Integer pageSize, String sortBy) {
-        Pageable paging = PageRequest.of(pageNo, pageSize, Sort.by(sortBy));
-
-        Page<Category> pagedResult = categoryRepository.findAll(paging);
-
-        if (pagedResult.hasContent()) {
-            return pagedResult.getContent()
-                    .stream()
-                    .map((element) -> modelMapper.map(element, CategoryDto.class))
-                    .collect(Collectors.toList());
-        } else {
-            return new ArrayList<>();
+    @Transactional
+    public CategoryDto createCategory(CategoryDto categoryDto, MultipartFile[] files) {
+        log.info("CategoryService :: Creating category [{}] with [{}] images", categoryDto.getCategoryTitle(), files != null ? files.length : 0);
+        Category category = CategoryMappingHelper.map(categoryDto);
+        
+        if (categoryDto.getParentCategoryId() != null && !categoryDto.getParentCategoryId().isBlank()) {
+            Category parent = categoryRepository.findById(categoryDto.getParentCategoryId())
+                    .orElseThrow(() -> new CategoryNotFoundException("Parent not found: " + categoryDto.getParentCategoryId()));
+            category.setParentCategory(parent);
         }
+        category.setId(null);
+
+        // Handle Image (Take the first one if multiple are provided, as per industry standard for Category cover image)
+        if (files != null && files.length > 0) {
+            Media media = mediaService.saveFile(files[0]);
+            category.setMedia(media);
+        }
+
+        return CategoryMappingHelper.map(categoryRepository.save(category));
     }
 
     @Override
-    public CategoryDto findById(Integer categoryId) {
-        log.info("CategoryDto Service, fetch category by id");
+    @Transactional(readOnly = true)
+    public CategoryDto getCategoryById(String categoryId) {
         return categoryRepository.findById(categoryId)
                 .map(CategoryMappingHelper::map)
-                .orElseThrow(() -> new CategoryNotFoundException(
-                        String.format("Category with id[%d] not found", categoryId)));
+                .orElseThrow(() -> new CategoryNotFoundException("Category not found: " + categoryId));
     }
 
     @Override
-    public Mono<CategoryDto> save(CategoryDto categoryDto) {
-        log.info("CategoryDto, service; save category");
-        return Mono.just(categoryDto)
+    @Transactional(readOnly = true)
+    public List<CategoryDto> getAllCategories(int page, int size, String sortBy, String direction) {
+        Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return categoryRepository.findAll(pageable).getContent().stream()
                 .map(CategoryMappingHelper::map)
-                .flatMap(category -> Mono
-                        .fromCallable(() -> CategoryMappingHelper.map(categoryRepository.save(category)))
-                        .onErrorMap(DataIntegrityViolationException.class,
-                                e -> new CategoryNotFoundException("Bad Request", e)));
+                .collect(Collectors.toList());
     }
 
     @Override
-    public CategoryDto update(CategoryDto categoryDto) {
-        log.info("CategoryDto Service, update category");
+    @Transactional
+    public CategoryDto patchCategory(String categoryId, Map<String, Object> fields) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new CategoryNotFoundException("Category not found: " + categoryId));
 
-        try {
-            Category existingCategory = categoryRepository.findById(categoryDto.getCategoryId())
-                    .orElseThrow(() -> new CategoryNotFoundException(
-                            "Category not found with id: " + categoryDto.getCategoryId()));
-
-            BeanUtils.copyProperties(categoryDto, existingCategory, "categoryId", "parentCategoryDto");
-
-            if (categoryDto.getParentCategoryDto() != null) {
-                existingCategory.setParentCategory(CategoryMappingHelper.map(categoryDto.getParentCategoryDto()));
+        fields.forEach((key, value) -> {
+            switch (key) {
+                case "categoryTitle" -> category.setCategoryTitle((String) value);
+                case "parentCategoryId" -> {
+                    if (value == null) {
+                        category.setParentCategory(null);
+                    } else {
+                        category.setParentCategory(categoryRepository.findById((String) value).orElse(null));
+                    }
+                }
             }
+        });
+        return CategoryMappingHelper.map(categoryRepository.save(category));
+    }
 
-            return CategoryMappingHelper.map(categoryRepository.save(existingCategory));
-        } catch (CategoryNotFoundException e) {
-            log.error("Error updating category. Category with id [{}] not found.", categoryDto.getCategoryId());
-            throw new CategoryNotFoundException(
-                    String.format("Category with id [%d] not found.", categoryDto.getCategoryId()), e);
-        } catch (DataIntegrityViolationException e) {
-            log.error("Error updating category: Data integrity violation", e);
-            throw new CategoryNotFoundException("Error updating category: Data integrity violation", e);
-        } catch (Exception e) {
-            log.error("Error updating category", e);
-            throw new CategoryNotFoundException("Error updating category", e);
+    @Override
+    @Transactional
+    public void deleteCategory(String categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new CategoryNotFoundException("Category not found: " + categoryId));
+
+        String mediaId = category.getMedia() != null ? category.getMedia().getId() : null;
+        
+        categoryRepository.delete(category);
+        log.info("CategoryService :: Category [{}] deleted from DB", categoryId);
+        
+        if (mediaId != null) {
+            mediaService.deleteMedia(mediaId);
         }
     }
 
     @Override
-    public CategoryDto update(Integer categoryId, CategoryDto categoryDto) {
-        log.info("CategoryDto Service: Updating category with categoryId");
+    @Transactional
+    public CategoryDto uploadImage(String categoryId, MultipartFile file) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new CategoryNotFoundException("Category not found: " + categoryId));
 
-        try {
-            // Check if the category exists
-            CategoryDto existingCategoryDto = this.findById(categoryId);
-
-            // Convert CategoryDto to Category and update the fields
-            Category existingCategory = CategoryMappingHelper.map(existingCategoryDto);
-            BeanUtils.copyProperties(categoryDto, existingCategory, "categoryId", "parentCategoryDto");
-
-            if (categoryDto.getParentCategoryDto() != null) {
-                existingCategory.setParentCategory(CategoryMappingHelper.map(categoryDto.getParentCategoryDto()));
-            }
-
-            // Save the updated category to the database
-            Category updatedCategory = categoryRepository.save(existingCategory);
-
-            // Map the updated Category back to CategoryDto and return
-            return CategoryMappingHelper.map(updatedCategory);
-        } catch (CategoryNotFoundException e) {
-            log.error("Error updating category. Category with id [{}] not found.", categoryId);
-            throw new CategoryNotFoundException(String.format("Category with id [%d] not found.", categoryId), e);
-        } catch (DataIntegrityViolationException e) {
-            log.error("Error updating category: Data integrity violation", e);
-            throw new CategoryNotFoundException("Error updating category: Data integrity violation", e);
-        } catch (Exception e) {
-            log.error("Error updating category", e);
-            throw new CategoryNotFoundException("Error updating category", e);
+        // Delete old media if exists
+        if (category.getMedia() != null) {
+            mediaService.deleteMedia(category.getMedia().getId());
         }
+
+        Media media = mediaService.saveFile(file);
+        category.setMedia(media);
+        return CategoryMappingHelper.map(categoryRepository.save(category));
     }
 
     @Override
-    public void deleteById(Integer categoryId) {
-        log.info("Void Service, delete category by id");
-        try {
-            categoryRepository.deleteById(categoryId);
-        } catch (CategoryNotFoundException e) {
-            log.error("Error delete category", e);
-            throw new CategoryNotFoundException("Error updating category", e);
+    @Transactional
+    public CategoryDto deleteImage(String categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new CategoryNotFoundException("Category not found: " + categoryId));
+
+        if (category.getMedia() == null) return CategoryMappingHelper.map(category);
+        
+        String mediaId = category.getMedia().getId();
+        category.setMedia(null);
+        categoryRepository.save(category);
+        
+        mediaService.deleteMedia(mediaId);
+        return CategoryMappingHelper.map(category);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getCategoryCount() {
+        return categoryRepository.count();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CategoryDto> searchCategories(String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return categoryRepository.findByCategoryTitleContainingIgnoreCase(keyword, pageable).getContent().stream()
+                .map(CategoryMappingHelper::map)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CategoryDto> getCategoryTree() {
+        return categoryRepository.findByParentCategoryIsNull().stream()
+                .map(CategoryMappingHelper::mapWithChildren)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CategoryDto> getRootCategories() {
+        return categoryRepository.findByParentCategoryIsNull().stream()
+                .map(CategoryMappingHelper::map)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CategoryDto> getSubCategories(String parentId) {
+        return categoryRepository.findByParentCategoryId(parentId).stream()
+                .map(CategoryMappingHelper::map)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CategoryDto getParentCategory(String categoryId) {
+        return categoryRepository.findById(categoryId)
+                .map(Category::getParentCategory)
+                .map(CategoryMappingHelper::map)
+                .orElse(null);
+    }
+
+    @Override
+    @Transactional
+    public CategoryDto moveCategory(String categoryId, String newParentId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new CategoryNotFoundException("Category not found: " + categoryId));
+        
+        if (newParentId == null || newParentId.isBlank()) {
+            category.setParentCategory(null);
+        } else {
+            Category newParent = categoryRepository.findById(newParentId)
+                    .orElseThrow(() -> new CategoryNotFoundException("New parent not found: " + newParentId));
+            category.setParentCategory(newParent);
         }
+        return CategoryMappingHelper.map(categoryRepository.save(category));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getProductCountByCategory(String categoryId) {
+        return categoryRepository.countProductsByCategoryId(categoryId);
+    }
+
+    @Override
+    @Transactional
+    public void bulkDeleteCategories(List<String> categoryIds) {
+        categoryIds.forEach(this::deleteCategory);
     }
 }

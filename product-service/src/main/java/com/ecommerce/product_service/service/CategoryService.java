@@ -1,30 +1,48 @@
 package com.ecommerce.product_service.service;
 
 import com.ecommerce.product_service.dto.CategoryDto;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 public interface CategoryService {
 
-    Flux<List<CategoryDto>> findAll();
+    CategoryDto createCategory(CategoryDto categoryDto, MultipartFile[] files);
 
-    Page<CategoryDto> findAllCategory(int page, int size);
-    List<CategoryDto> getAllCategories(Integer pageNo, Integer pageSize, String sortBy);
+    CategoryDto getCategoryById(String categoryId);
 
+    CategoryDto patchCategory(String categoryId, Map<String, Object> fields);
 
+    List<CategoryDto> getAllCategories(int page, int size, String sortBy, String direction);
 
-    CategoryDto findById(final Integer categoryId);
+    void deleteCategory(String categoryId);
 
-    Mono<CategoryDto> save(final CategoryDto categoryDto);
+    long getCategoryCount();
 
-    CategoryDto update(final CategoryDto categoryDto);
+    // ─── Search & Hierarchy ───────────────────────────────────
 
-    CategoryDto update(final Integer categoryId, final CategoryDto categoryDto);
+    List<CategoryDto> searchCategories(String keyword, int page, int size);
 
-    void deleteById(final Integer categoryId);
+    List<CategoryDto> getCategoryTree();
 
+    List<CategoryDto> getRootCategories();
+
+    List<CategoryDto> getSubCategories(String parentId);
+
+    CategoryDto getParentCategory(String categoryId);
+
+    CategoryDto moveCategory(String categoryId, String newParentId);
+
+    // ─── Image Operations ─────────────────────────────────────
+    
+    CategoryDto uploadImage(String categoryId, MultipartFile file);
+
+    CategoryDto deleteImage(String categoryId);
+
+    // ─── Analytics ────────────────────────────────────────────
+
+    long getProductCountByCategory(String categoryId);
+
+    void bulkDeleteCategories(List<String> categoryIds);
 }

@@ -2,6 +2,7 @@ package com.ecommerce.product_service.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.io.Serial;
@@ -20,6 +21,8 @@ public class CategoryDto implements Serializable {
 
     // ─── Identity ────────────────────────────────────────────────────────────
     private String id;
+
+    @NotBlank(message = "Category title must not be blank")
     private String categoryTitle;
 
     // ─── Image ───────────────────────────────────────────────────────────────

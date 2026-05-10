@@ -15,10 +15,11 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 
-@RequiredArgsConstructor
-@AllArgsConstructor
+import java.util.Map;
+
 @Data
 @Builder
+@AllArgsConstructor
 public class ExceptionMessage implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -27,9 +28,13 @@ public class ExceptionMessage implements Serializable {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = AppConstant.ZONED_DATE_TIME_FORMAT)
     private final ZonedDateTime timestamp;
 
-    @JsonInclude(value = JsonInclude.Include.NON_NULL)
-    private Throwable throwable;
-    private final HttpStatus httpStatus;
+    private final int status;
+    private final String error;
+    private final String errorCode;
     private final String message;
+    private final String path;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private final Map<String, String> errors;
 
 }
