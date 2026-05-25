@@ -20,19 +20,19 @@ public interface CategoryMappingHelper {
 
         if (category.getMedia() != null) {
             builder.imageUrl(category.getMedia().getFilePath())
-                   .imageName(category.getMedia().getFileName())
-                   .contentType(category.getMedia().getFileType());
+                    .imageName(category.getMedia().getOriginalFileName())
+                    .contentType(category.getMedia().getFileType());
         }
 
         if (parentCategory != null) {
             CategoryDto.CategoryDtoBuilder parentBuilder = CategoryDto.builder()
-                            .id(parentCategory.getId())
-                            .categoryTitle(parentCategory.getCategoryTitle());
-            
+                    .id(parentCategory.getId())
+                    .categoryTitle(parentCategory.getCategoryTitle());
+
             if (parentCategory.getMedia() != null) {
                 parentBuilder.imageUrl(parentCategory.getMedia().getFilePath());
             }
-            
+
             builder.parentCategoryDto(parentBuilder.build());
             builder.parentCategoryId(parentCategory.getId());
         }
@@ -51,7 +51,10 @@ public interface CategoryMappingHelper {
                 .build();
     }
 
-    /** Maps a Category entity to CategoryDto including all sub-categories recursively. */
+    /**
+     * Maps a Category entity to CategoryDto including all sub-categories
+     * recursively.
+     */
     static CategoryDto mapWithChildren(final Category category) {
         CategoryDto dto = map(category);
         if (category.getSubCategories() != null && !category.getSubCategories().isEmpty()) {

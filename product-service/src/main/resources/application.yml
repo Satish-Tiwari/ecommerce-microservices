@@ -22,7 +22,8 @@ spring:
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
+    show-sql: false
+    open-in-view: false
     hibernate:
       ddl-auto: update
     properties:
@@ -36,8 +37,13 @@ spring:
     sampler:
       probability: 1.0
 
+    devtools:
+      restart:
+        enabled: false
+
 eureka:
   client:
+    enabled: false
     serviceUrl:
       defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
   instance:
@@ -63,7 +69,7 @@ logging:
   level:
     org:
       hibernate:
-        SQL: DEBUG
+        SQL: false
       springframework:
         web: INFO
         data: INFO

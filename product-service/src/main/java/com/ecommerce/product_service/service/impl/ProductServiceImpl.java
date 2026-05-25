@@ -7,6 +7,7 @@ import com.ecommerce.product_service.entity.Product.ProductStatus;
 import com.ecommerce.product_service.entity.Product.ProductType;
 import com.ecommerce.product_service.entity.Product.StockStatus;
 import com.ecommerce.product_service.exception.wrapper.ProductNotFoundException;
+import com.ecommerce.product_service.exception.wrapper.CategoryNotFoundException;
 import com.ecommerce.product_service.helper.ProductMappingHelper;
 import com.ecommerce.product_service.repository.CategoryRepository;
 import com.ecommerce.product_service.repository.ProductRepository;
@@ -25,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,34 +80,28 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductDto createProduct(ProductDto productDto, MultipartFile[] files) {
-        log.info("ProductService :: Creating product [{}] with [{}] images", productDto.getName(), files != null ? files.length : 0);
         Product product = ProductMappingHelper.map(productDto);
-        
+
         if (productDto.getCategoryId() != null) {
             Category category = categoryRepository.findById(productDto.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException("Category not found"));
+                    .orElse(null);
             product.setCategory(category);
         }
-        
+
         product.setId(null); // Ensure new product
         product.setImages(new ArrayList<>());
 
-        // Handle Image Uploads
+        // Upload Images
         if (files != null && files.length > 0) {
-            for (int i = 0; i < files.length; i++) {
-                MultipartFile file = files[i];
-                Media media = mediaService.saveFile(file);
-                
-                ProductImage productImage = ProductImage.builder()
-                        .media(media)
-                        .sortOrder(i)
-                        .product(product)
-                        .build();
-                
+            List<Media> uploadMedia = mediaService.saveFiles(Arrays.asList(files));
+            uploadMedia.forEach(media -> {
+                ProductImage productImage = new ProductImage();
+                productImage.setMedia(media);
+                productImage.setProduct(product);
                 product.getImages().add(productImage);
-            }
+            });
         }
-        
+
         return ProductMappingHelper.map(productRepository.save(product));
     }
 
@@ -115,8 +111,9 @@ public class ProductServiceImpl implements ProductService {
         Product existingProduct = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + productId));
 
-        BeanUtils.copyProperties(productDto, existingProduct, "id", "createdAt", "version", "images", "metaData", "variants", "reviews");
-        
+        BeanUtils.copyProperties(productDto, existingProduct, "id", "createdAt", "version", "images", "metaData",
+                "variants", "reviews");
+
         if (productDto.getCategoryId() != null) {
             Category category = categoryRepository.findById(productDto.getCategoryId())
                     .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -156,7 +153,7 @@ public class ProductServiceImpl implements ProductService {
         // 1. Delete associated media via MediaService
         product.getImages().forEach(img -> {
             if (img.getMedia() != null) {
-                mediaService.deleteFile(img.getMedia().getFilePath());
+                // mediaService.deleteFile(img.getMedia().getFilePath());
             }
         });
 
@@ -175,8 +172,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductDto> filterProducts(String categoryId, String brand, String productType, String status, 
-                                          BigDecimal minPrice, BigDecimal maxPrice, String stockStatus, int page, int size) {
+    public List<ProductDto> filterProducts(String categoryId, String brand, String productType, String status,
+            BigDecimal minPrice, BigDecimal maxPrice, String stockStatus, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         List<Product> products;
         if (categoryId != null) {
@@ -188,7 +185,7 @@ public class ProductServiceImpl implements ProductService {
         } else {
             products = productRepository.findAll(pageable).getContent();
         }
-        
+
         return products.stream()
                 .map(ProductMappingHelper::map)
                 .collect(Collectors.toList());
@@ -229,7 +226,8 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductDto> getNewArrivals(int page, int size) {
-        return productRepository.findAll(PageRequest.of(page, size, Sort.by("createdAt").descending())).getContent().stream()
+        return productRepository.findAll(PageRequest.of(page, size, Sort.by("createdAt").descending())).getContent()
+                .stream()
                 .map(ProductMappingHelper::map)
                 .collect(Collectors.toList());
     }
@@ -237,7 +235,8 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductDto> getTopRatedProducts(int size) {
-        return productRepository.findAll(PageRequest.of(0, size, Sort.by("averageRating").descending())).getContent().stream()
+        return productRepository.findAll(PageRequest.of(0, size, Sort.by("averageRating").descending())).getContent()
+                .stream()
                 .map(ProductMappingHelper::map)
                 .collect(Collectors.toList());
     }
@@ -348,8 +347,10 @@ public class ProductServiceImpl implements ProductService {
     public ProductDto updatePricing(String productId, Map<String, Object> pricingUpdate) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found"));
-        if (pricingUpdate.containsKey("price")) product.setPrice(new BigDecimal(pricingUpdate.get("price").toString()));
-        if (pricingUpdate.containsKey("salePrice")) product.setSalePrice(new BigDecimal(pricingUpdate.get("salePrice").toString()));
+        if (pricingUpdate.containsKey("price"))
+            product.setPrice(new BigDecimal(pricingUpdate.get("price").toString()));
+        if (pricingUpdate.containsKey("salePrice"))
+            product.setSalePrice(new BigDecimal(pricingUpdate.get("salePrice").toString()));
         return ProductMappingHelper.map(productRepository.save(product));
     }
 
@@ -368,7 +369,8 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public long getProductCount(String status) {
-        return status == null ? productRepository.count() : productRepository.countByStatus(ProductStatus.valueOf(status));
+        return status == null ? productRepository.count()
+                : productRepository.countByStatus(ProductStatus.valueOf(status));
     }
 
     @Override

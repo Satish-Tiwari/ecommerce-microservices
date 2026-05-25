@@ -32,20 +32,23 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public CategoryDto createCategory(CategoryDto categoryDto, MultipartFile[] files) {
-        log.info("CategoryService :: Creating category [{}] with [{}] images", categoryDto.getCategoryTitle(), files != null ? files.length : 0);
+        log.info("CategoryService :: Creating category [{}] with [{}] images", categoryDto.getCategoryTitle(),
+                files != null ? files.length : 0);
         Category category = CategoryMappingHelper.map(categoryDto);
-        
+
         if (categoryDto.getParentCategoryId() != null && !categoryDto.getParentCategoryId().isBlank()) {
             Category parent = categoryRepository.findById(categoryDto.getParentCategoryId())
-                    .orElseThrow(() -> new CategoryNotFoundException("Parent not found: " + categoryDto.getParentCategoryId()));
+                    .orElseThrow(() -> new CategoryNotFoundException(
+                            "Parent not found: " + categoryDto.getParentCategoryId()));
             category.setParentCategory(parent);
         }
         category.setId(null);
 
-        // Handle Image (Take the first one if multiple are provided, as per industry standard for Category cover image)
+        // Handle Image (Take the first one if multiple are provided, as per industry
+        // standard for Category cover image)
         if (files != null && files.length > 0) {
-            Media media = mediaService.saveFile(files[0]);
-            category.setMedia(media);
+            // Media media = mediaService.saveFile(files[0]);
+            // category.setMedia(media);
         }
 
         return CategoryMappingHelper.map(categoryRepository.save(category));
@@ -97,10 +100,10 @@ public class CategoryServiceImpl implements CategoryService {
                 .orElseThrow(() -> new CategoryNotFoundException("Category not found: " + categoryId));
 
         String mediaId = category.getMedia() != null ? category.getMedia().getId() : null;
-        
+
         categoryRepository.delete(category);
         log.info("CategoryService :: Category [{}] deleted from DB", categoryId);
-        
+
         if (mediaId != null) {
             mediaService.deleteMedia(mediaId);
         }
@@ -117,8 +120,8 @@ public class CategoryServiceImpl implements CategoryService {
             mediaService.deleteMedia(category.getMedia().getId());
         }
 
-        Media media = mediaService.saveFile(file);
-        category.setMedia(media);
+        // Media media = mediaService.saveFile(file);
+        // category.setMedia(media);
         return CategoryMappingHelper.map(categoryRepository.save(category));
     }
 
@@ -128,12 +131,13 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CategoryNotFoundException("Category not found: " + categoryId));
 
-        if (category.getMedia() == null) return CategoryMappingHelper.map(category);
-        
+        if (category.getMedia() == null)
+            return CategoryMappingHelper.map(category);
+
         String mediaId = category.getMedia().getId();
         category.setMedia(null);
         categoryRepository.save(category);
-        
+
         mediaService.deleteMedia(mediaId);
         return CategoryMappingHelper.map(category);
     }
@@ -191,7 +195,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto moveCategory(String categoryId, String newParentId) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new CategoryNotFoundException("Category not found: " + categoryId));
-        
+
         if (newParentId == null || newParentId.isBlank()) {
             category.setParentCategory(null);
         } else {
