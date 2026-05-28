@@ -15,10 +15,21 @@ spring:
       max-request-size: 50MB
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/product-service
+    url: jdbc:postgresql://localhost:5432/product-service?rewriteBatchedStatements=true
     username: postgres
     password: ${POSTGRES_PASSWORD:admin}
     driver-class-name: org.postgresql.Driver
+
+    hikari:
+      maximum-pool-size: 20
+  
+  batch:
+    jdbc:
+      initialize-schema: always
+    
+    job:
+      enabled: false
+
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
@@ -78,6 +89,7 @@ logging:
             data:
               rest: INFO
             orm: INFO
+        batch: INFO
 
 jwt:
   # Secret key (can be overridden using environment variable JWT_SECRET)

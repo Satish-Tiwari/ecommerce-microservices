@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -31,7 +32,8 @@ import java.util.Map;
 public class ProductServiceExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ExceptionMessage> handleValidationException(MethodArgumentNotValidException ex, HttpServletRequest request) {
+    public ResponseEntity<ExceptionMessage> handleValidationException(MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
@@ -41,16 +43,19 @@ public class ProductServiceExceptionHandler {
 
         log.warn("Validation failed for request: {} - Errors: {}", request.getRequestURI(), errors);
 
-        return buildResponse(HttpStatus.BAD_REQUEST, "Validation Failed", "ERR_VALIDATION", request.getRequestURI(), errors);
+        return buildResponse(HttpStatus.BAD_REQUEST, "Validation Failed", "ERR_VALIDATION", request.getRequestURI(),
+                errors);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ExceptionMessage> handleMessageNotReadableException(HttpMessageNotReadableException ex, HttpServletRequest request) {
+    public ResponseEntity<ExceptionMessage> handleMessageNotReadableException(HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
         log.warn("Malformed JSON request: {}", request.getRequestURI());
-        return buildResponse(HttpStatus.BAD_REQUEST, "Malformed JSON request", "ERR_BAD_REQUEST", request.getRequestURI(), null);
+        return buildResponse(HttpStatus.BAD_REQUEST, "Malformed JSON request", "ERR_BAD_REQUEST",
+                request.getRequestURI(), null);
     }
 
-    @ExceptionHandler({CategoryNotFoundException.class, ProductNotFoundException.class})
+    @ExceptionHandler({ CategoryNotFoundException.class, ProductNotFoundException.class })
     public ResponseEntity<ExceptionMessage> handleNotFoundException(RuntimeException ex, HttpServletRequest request) {
         log.warn("Resource not found: {} - {}", request.getRequestURI(), ex.getMessage());
         String errorCode = ex instanceof CategoryNotFoundException ? "ERR_CATEGORY_NOT_FOUND" : "ERR_PRODUCT_NOT_FOUND";
@@ -58,50 +63,85 @@ public class ProductServiceExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ExceptionMessage> handleTypeMismatchException(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
-        String message = String.format("Parameter '%s' should be of type '%s'", ex.getName(), ex.getRequiredType().getSimpleName());
+    public ResponseEntity<ExceptionMessage> handleTypeMismatchException(MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request) {
+        String message = String.format("Parameter '%s' should be of type '%s'", ex.getName(),
+                ex.getRequiredType().getSimpleName());
         log.warn("Type mismatch: {}", message);
         return buildResponse(HttpStatus.BAD_REQUEST, message, "ERR_TYPE_MISMATCH", request.getRequestURI(), null);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<ExceptionMessage> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+    public ResponseEntity<ExceptionMessage> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex,
+            HttpServletRequest request) {
         log.warn("Method not supported: {} - {}", ex.getMethod(), request.getRequestURI());
-        return buildResponse(HttpStatus.METHOD_NOT_ALLOWED, ex.getMessage(), "ERR_METHOD_NOT_ALLOWED", request.getRequestURI(), null);
+        return buildResponse(HttpStatus.METHOD_NOT_ALLOWED, ex.getMessage(), "ERR_METHOD_NOT_ALLOWED",
+                request.getRequestURI(), null);
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    public ResponseEntity<ExceptionMessage> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
+    public ResponseEntity<ExceptionMessage> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex,
+            HttpServletRequest request) {
         log.warn("Media type not supported: {} - {}", ex.getContentType(), request.getRequestURI());
-        return buildResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE, ex.getMessage(), "ERR_UNSUPPORTED_MEDIA_TYPE", request.getRequestURI(), null);
+        return buildResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE, ex.getMessage(), "ERR_UNSUPPORTED_MEDIA_TYPE",
+                request.getRequestURI(), null);
     }
 
     @ExceptionHandler(MissingServletRequestPartException.class)
-    public ResponseEntity<ExceptionMessage> handleMissingServletRequestPartException(MissingServletRequestPartException ex, HttpServletRequest request) {
+    public ResponseEntity<ExceptionMessage> handleMissingServletRequestPartException(
+            MissingServletRequestPartException ex, HttpServletRequest request) {
         log.warn("Missing request part: {} - {}", ex.getRequestPartName(), request.getRequestURI());
-        return buildResponse(HttpStatus.BAD_REQUEST, "Required request part '" + ex.getRequestPartName() + "' is not present", "ERR_MISSING_PART", request.getRequestURI(), null);
+        return buildResponse(HttpStatus.BAD_REQUEST,
+                "Required request part '" + ex.getRequestPartName() + "' is not present", "ERR_MISSING_PART",
+                request.getRequestURI(), null);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ExceptionMessage> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex, HttpServletRequest request) {
+    public ResponseEntity<ExceptionMessage> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex,
+            HttpServletRequest request) {
         log.warn("File size limit exceeded: {}", request.getRequestURI());
-        return buildResponse(HttpStatus.PAYLOAD_TOO_LARGE, "File size limit exceeded", "ERR_FILE_TOO_LARGE", request.getRequestURI(), null);
+        return buildResponse(HttpStatus.PAYLOAD_TOO_LARGE, "File size limit exceeded", "ERR_FILE_TOO_LARGE",
+                request.getRequestURI(), null);
     }
 
     @ExceptionHandler(MultipartException.class)
-    public ResponseEntity<ExceptionMessage> handleMultipartException(MultipartException ex, HttpServletRequest request) {
+    public ResponseEntity<ExceptionMessage> handleMultipartException(MultipartException ex,
+            HttpServletRequest request) {
         log.warn("Multipart parsing failed: {} - {}", ex.getMessage(), request.getRequestURI());
         String message = "Failed to parse multipart request. Ensure you are not manually setting the Content-Type header in Postman.";
-        return buildResponse(HttpStatus.BAD_REQUEST, message, "ERR_MULTIPART_PARSE_FAILED", request.getRequestURI(), null);
+        return buildResponse(HttpStatus.BAD_REQUEST, message, "ERR_MULTIPART_PARSE_FAILED", request.getRequestURI(),
+                null);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ExceptionMessage> handleDataIntegrityViolation(DataIntegrityViolationException ex,
+            HttpServletRequest request) {
+        // Walk the cause chain to find the most descriptive message (e.g. PSQLException
+        // detail)
+        Throwable cause = ex;
+        String message = ex.getMessage();
+        while (cause.getCause() != null) {
+            cause = cause.getCause();
+            if (cause.getMessage() != null) {
+                message = cause.getMessage();
+            }
+        }
+        // Keep only the first line so we don't leak internal SQL
+        // message = message.lines().findFirst().orElse(message).trim();
+        log.warn("Data integrity violation at {}: {}", request.getRequestURI(), message);
+        return buildResponse(HttpStatus.CONFLICT, message, "ERR_DATA_INTEGRITY_VIOLATION", request.getRequestURI(),
+                null);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ExceptionMessage> handleGenericException(Exception ex, HttpServletRequest request) {
         log.error("Unexpected error occurred at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", "ERR_INTERNAL_SERVER_ERROR", request.getRequestURI(), null);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred",
+                "ERR_INTERNAL_SERVER_ERROR", request.getRequestURI(), null);
     }
 
-    private ResponseEntity<ExceptionMessage> buildResponse(HttpStatus status, String message, String errorCode, String path, Map<String, String> errors) {
+    private ResponseEntity<ExceptionMessage> buildResponse(HttpStatus status, String message, String errorCode,
+            String path, Map<String, String> errors) {
         ExceptionMessage payload = ExceptionMessage.builder()
                 .timestamp(ZonedDateTime.now(ZoneId.systemDefault()))
                 .status(status.value())
